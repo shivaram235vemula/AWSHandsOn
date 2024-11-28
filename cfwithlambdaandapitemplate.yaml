@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  ShieldLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "shield"
+      Runtime: "python3.9"  # Specify the Python runtime (update if needed)
+      Role: "arn:aws:iam::975049951119:role/prodalertlambdarole"
+      Handler: "index.lambda_handler"
+      Code:
+        ZipFile: |
+          import json
+          import random
+
+          def lambda_handler(event, context):
+              # List of motivational sentences
+              motivational_sentences = [
+                  "Believe in yourself and all that you are.",
+                  "The best way to predict the future is to create it.",
+                  "Don't watch the clock; do what it does. Keep going.",
+                  "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+                  "Hardships often prepare ordinary people for an extraordinary destiny.",
+                  "The only limit to our realization of tomorrow is our doubts of today.",
+                  "Dream big and dare to fail.",
+                  "Act as if what you do makes a difference. It does."
+              ]
+              
+              # Select a random motivational sentence
+              random_sentence = random.choice(motivational_sentences)
+              
+              # Log and return the selected sentence
+              print("Motivational Sentence:", random_sentence)
+              return random_sentence
+      Timeout: 15  # Optional: Set the timeout for the Lambda function
+      MemorySize: 128  # Optional: Set the memory allocation for the function
+
+  ApiGatewayRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: 'MyRestApi'
+      EndpointConfiguration:
+        Types:
+          - 'REGIONAL'
+  
+  ApiGatewayResourceMessage:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties: 
+      ParentId: 
+        Fn::GetAtt: 
+          - ApiGatewayRestApi
+          - RootResourceId
+      PathPart: 'message'
+      RestApiId: !Ref 'ApiGatewayRestApi'
+
+  ApiGatewayMethodMessageGet:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: 'NONE'
+      HttpMethod: 'GET'
+      ResourceId: !Ref 'ApiGatewayResourceMessage'
+      RestApiId: !Ref 'ApiGatewayRestApi'
+      Integration:
+        IntegrationHttpMethod: 'POST'
+        Type: 'AWS'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ShieldLambdaFunction.Arn}/invocations'
+        PassthroughBehavior: 'WHEN_NO_MATCH'
+        RequestTemplates:
+          application/json: '{ "message": $input.body }'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: '{ "message": $input.body }'
+            ResponseParameters:
+              method.response.header.Content-Type: "'application/json'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Content-Type: true
+          ResponseModels:
+            application/json: "Empty"
+
+  ApiGatewayDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref 'ApiGatewayRestApi'
+      StageName: 'test'
+    DependsOn: 
+      - ApiGatewayMethodMessageGet
+
+  LambdaInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref 'ShieldLambdaFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/*/GET/message'
+
+Outputs:
+  ApiEndpoint:
+    Value: 
+      Fn::Join: 
+        - ''
+        - 
+          - 'https://'
+          - !Ref 'ApiGatewayRestApi'
+          - '.execute-api.ap-south-1.amazonaws.com/test/message'
+    Description: 'Endpoint for the API Gateway'
+
+  LambdaFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref ShieldLambdaFunction
