@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Stack that deploys an external template from GitHub in the ap-south-1 region.
+
+Resources:
+  TagoreStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      StackName: tagorestack
+      TemplateURL: !Sub "https://raw.githubusercontent.com/<YourGitHubUsername>/<YourRepoName>/main/cfwithlambdaandapitemplate.yaml"
+      RoleARN: arn:aws:iam::975049951119:role/AWSCloudFormationStackSetAdministrationRole
+
+Outputs:
+  StackID:
+    Description: The ID of the created stack
+    Value: !Ref TagoreStack
