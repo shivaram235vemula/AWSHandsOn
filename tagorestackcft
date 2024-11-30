@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-
 Description: CloudFormation Stack to create resources using an external template.
 
 Resources:
@@ -22,7 +21,6 @@ Resources:
                   import random
 
                   def lambda_handler(event, context):
-                      # List of motivational sentences
                       motivational_sentences = [
                           "Believe in yourself and all that you are.",
                           "The best way to predict the future is to create it.",
@@ -33,11 +31,7 @@ Resources:
                           "Dream big and dare to fail.",
                           "Act as if what you do makes a difference. It does."
                       ]
-                      
-                      # Select a random motivational sentence
                       random_sentence = random.choice(motivational_sentences)
-                      
-                      # Log and return the selected sentence
                       print("Motivational Sentence:", random_sentence)
                       return random_sentence
               Timeout: 15
@@ -50,12 +44,12 @@ Resources:
               EndpointConfiguration:
                 Types:
                   - 'REGIONAL'
-          
+
           ApiGatewayResourceMessage:
             Type: 'AWS::ApiGateway::Resource'
-            Properties: 
-              ParentId: 
-                Fn::GetAtt: 
+            Properties:
+              ParentId:
+                Fn::GetAtt:
                   - ApiGatewayRestApi
                   - RootResourceId
               PathPart: 'message'
@@ -93,7 +87,7 @@ Resources:
             Properties:
               RestApiId: !Ref 'ApiGatewayRestApi'
               StageName: 'test'
-            DependsOn: 
+            DependsOn:
               - ApiGatewayMethodMessageGet
 
           LambdaInvokePermission:
@@ -104,21 +98,22 @@ Resources:
               Principal: 'apigateway.amazonaws.com'
               SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/*/GET/message'
 
+        Outputs:
+          ApiGatewayRestApiId:
+            Description: "ID of the API Gateway"
+            Value: !Ref ApiGatewayRestApi
+
 Outputs:
   ApiEndpoint:
-    Value: 
-      Fn::Join: 
+    Value:
+      Fn::Join:
         - ''
         - 
           - 'https://'
-          - !Ref 'ApiGatewayRestApi'
+          - !GetAtt TagoreStack.Outputs.ApiGatewayRestApiId
           - '.execute-api.ap-south-1.amazonaws.com/test/message'
     Description: 'Endpoint for the API Gateway'
 
   LambdaFunctionName:
     Description: "Name of the Lambda function"
-    Value: !Ref ShieldLambdaFunction      
-
-  StackID:
-    Description: The ID of the created stack
-    Value: !Ref TagoreStack
+    Value: !GetAtt TagoreStack.Outputs.ShieldLambdaFunction
