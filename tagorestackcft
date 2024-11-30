@@ -6,8 +6,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://raw.githubusercontent.com/shivaram235vemula/AWSHandsOn/main/cfwithlambdaandapitemplate.yaml
-      RoleARN: arn:aws:iam::975049951119:role/AWSCloudFormationStackSetAdministrationRole
-
 Outputs:
   StackID:
     Description: The ID of the created stack
