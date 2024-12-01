@@ -20,4 +20,4 @@ Outputs:
 
   LambdaFunctionName:
     Description: "Name of the Lambda function"
-    Value: !GetAtt TagoreStack.Outputs.ShieldLambdaFunction
+    Value: !GetAtt TagoreStack.Outputs.ShieldLambdaFunctionName
