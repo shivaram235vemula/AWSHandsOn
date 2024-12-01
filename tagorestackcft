@@ -5,7 +5,7 @@ Resources:
   TagoreStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3://apigateway235/minecft.yaml
+      TemplateURL: https://github.com/shivaram235vemula/AWSHandsOn/blob/ada54f45417f6dd707cfd033fb6a3306e833f9bd/cfwithlambdaandapitemplate.yaml
          
 
 Outputs:
